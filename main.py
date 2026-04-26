@@ -1,3 +1,5 @@
+import asyncio
+
 from openai.types.responses.response_input_param import ResponseInputParam
 from rich import print
 from rich.console import Console, Group
@@ -8,6 +10,8 @@ from rich.table import Table
 from rich.text import Text
 
 from custom_args import args
+
+# from input import ChatInputApp
 from response import get_response
 
 console = Console(width=100)
@@ -18,13 +22,16 @@ status = Status("Crunching the tokens...", spinner="pipe", spinner_style="bold w
 #     return Panel(content, **args)
 
 
-def main():
-    if not args.one_shot:
-        print(Panel("My name is ScuffedBot. How may I be of service?", expand=False))
+async def main():
+    # if not args.one_shot:
+    #     await ChatInputApp().run_async()
+    #     return
+    if not args.user_prompt:
+        raise RuntimeError("One-shot (CLI mode) requires a prompt argument")
 
     history: ResponseInputParam = []
-
     input = args.user_prompt
+    # agent_memory = True
 
     history.append({"role": "user", "content": input})
 
@@ -32,7 +39,7 @@ def main():
         return
 
     with Live(Panel(Group(status), expand=False), console=console, transient=True):
-        resp = get_response(history)
+        resp = await get_response(history)
 
     ai_response = resp.output_text
 
@@ -42,7 +49,10 @@ def main():
         if not resp.usage:
             raise RuntimeError("No usage data found")
         usage = resp.usage
-
+        # For testing purposes
+        print("User prompt: ", input)
+        print("Prompt tokens: ", usage.input_tokens)
+        print("Response tokens: ", usage.output_tokens)
         prompt_tokens = usage.input_tokens
         resp_tokens = usage.output_tokens
         reasoning_tokens = usage.output_tokens_details.reasoning_tokens
@@ -73,4 +83,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

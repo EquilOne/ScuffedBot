@@ -1,7 +1,7 @@
 import os
 
 from dotenv import load_dotenv
-from openai import OpenAI
+from openai import AsyncOpenAI
 from openai.types.responses import Response
 from openai.types.responses.response_input_param import ResponseInputParam
 
@@ -11,12 +11,12 @@ if api_key is None:
     raise RuntimeError("Api key not found")
 
 
-def get_response(input: ResponseInputParam) -> Response:
-    client = OpenAI(
+async def get_response(input: ResponseInputParam) -> Response:
+    client = AsyncOpenAI(
         base_url="https://openrouter.ai/api/v1",
         api_key=api_key,
     )
-    resp = client.responses.create(
+    resp = await client.responses.create(
         model="openrouter/free",
         input=input,
     )

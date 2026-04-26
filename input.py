@@ -1,7 +1,8 @@
+from openai.types.responses.response_input_param import ResponseInputParam
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.message import Message
-from textual.widgets import Footer, Header, RichLog, TextArea
+from textual.widgets import Footer, Header, LoadingIndicator, RichLog, TextArea
 
 from response import get_response
 
@@ -42,23 +43,46 @@ class ChatInputApp(App):
         height: 1fr;         /* takes remaining space */
         border: tall $surface;
     }
+    LoadingIndicator {
+        height: 1;
+        dock: bottom;
+        layer: top;
+        display: none;
+    }
     """
 
     def compose(self) -> ComposeResult:
         yield Header()
+        yield LoadingIndicator()
         yield RichLog(id="log", markup=True, wrap=True)
         yield ChatInput(id="chat", placeholder="Type your message here...")
         yield Footer()
 
     def on_mount(self) -> None:
+        self.history: ResponseInputParam = []
         self.query_one(ChatInput).focus()
 
+    def create_response_input_param(self, user_input: str) -> ResponseInputParam:
+        self.history.append({"role": "user", "content": user_input})
+        return self.history
+
     async def on_chat_input_submitted(self, message: ChatInput.Submitted) -> None:
+        loader = self.query_one(LoadingIndicator)
+        loader.display = True
         log = self.query_one("#log", RichLog)
+        chat = self.query_one("#chat", ChatInput)
+
+        chat.disabled = True
         log.write(f"[bold rose]You:[/bold rose] {message.text}")
+        # log.write(f"[italic]{status}[/italic]")
 
-        resp = await get_response()
-        log.write(f"[bold rose]Assistant:[/bold rose] {resp}")
-
-
-ChatInputApp().run()
+        try:
+            resp = await get_response(self.create_response_input_param(message.text))
+            log.write(f"[bold rose]Assistant:[/bold rose] {resp.output_text}")
+            self.history.append({"role": "assistant", "content": resp.output_text})
+        except Exception as e:
+            log.write(f"[bold red]Error:[/bold red] {e}")
+        finally:
+            loader.display = False
+            chat.disabled = False
+            chat.focus()

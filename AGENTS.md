@@ -13,16 +13,21 @@ A Python-based AI agent using OpenRouter API, `rich` for CLI output, and `textua
 - API calls are routed through `https://openrouter.ai/api/v1`.
 
 ## High-Signal Quirks
-- **Entrypoints**: `main.py` is the primary CLI entrypoint. `input.py` is a WIP Textual TUI.
-- **Async Mismatch**: `input.py` incorrectly attempts to `await` the synchronous `get_response()` function from `response.py`.
+- **Entrypoints**: `main.py` is the primary CLI entrypoint. `input.py` is the Textual TUI.
+- **Async Flow**: `main.py` and `input.py` are fully async.
 - **API Model**: Defaults to `openrouter/free` in `response.py`.
 - **CLI Flags**: 
   - `-v`, `--verbose`: Show token usage and model info.
   - `-d`, `--debug`: Print internal args and raw response.
   - `-n`, `--dry-run`: Skip the API call.
-  - `-O`, `--one-shot`: Disable "ScuffedBot" intro greeting.
+  - `-o`, `--one-shot`: Disable "ScuffedBot" intro greeting.
+
+## Communication Modes
+- **Caveman Mode**: Ultra-compressed technical communication.
+- **Caveman Commit**: Terse, exact conventional commits.
+- **Caveman Review**: High-signal, noise-free code review.
 
 ## Architecture
 - `response.py`: Core logic for API interaction.
 - `custom_args.py`: Argument parsing for `main.py`.
-- `input.py`: Experimental TUI (requires fixes for `get_response` integration).
+- `input.py`: Functional Textual TUI with chat history and LoadingIndicator.

@@ -8,7 +8,6 @@ def get_files_info(working_directory, directory="."):
         valid_target_dir = (
             os.path.commonpath([working_dir_abs, target_dir]) == working_dir_abs
         )
-        dir_contents = os.listdir(target_dir)
         info_list = []
 
         if not valid_target_dir:
@@ -21,6 +20,8 @@ def get_files_info(working_directory, directory="."):
 
         if not os.path.exists(target_dir):
             raise FileNotFoundError(f'"{directory}" does not exist')
+
+        dir_contents = os.listdir(target_dir)
 
         for item in dir_contents:
             current_item_path = os.path.normpath(os.path.join(target_dir, item))

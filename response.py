@@ -5,6 +5,8 @@ from openai import AsyncOpenAI
 from openai.types.responses import Response
 from openai.types.responses.response_input_param import ResponseInputParam
 
+from prompts import system_prompt
+
 load_dotenv()
 api_key = os.getenv("OPENROUTER_API_KEY")
 if api_key is None:
@@ -19,6 +21,7 @@ async def get_response(input: ResponseInputParam) -> Response:
     resp = await client.responses.create(
         model="openrouter/free",
         input=input,
+        instructions=system_prompt,
     )
     if not resp:
         raise RuntimeError("No response returned")

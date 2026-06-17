@@ -1,4 +1,5 @@
 import os
+import subprocess
 
 
 def run_python_file(
@@ -15,15 +16,30 @@ def run_python_file(
             raise PermissionError(
                 f'Cannot execute "{file_path}" as it is outside the permitted working directory'
             )
-        if not os.path.isfile(file_path):
+        if not os.path.isfile(target):
             raise FileNotFoundError(
                 f'"{file_path}" does not exist or is not a regular file'
             )
-        if not file_path.endswith(".py"):
+        if not target.endswith(".py"):
             raise ValueError(f'"{file_path}" is not a Python file')
 
         command = ["python", target]
-        command.extend(args)
+        if args is not None:
+            command.extend(*args)
+
+        result = subprocess.run(command, capture_output=True, text=True)
+        output_string = ""
+
+        if result.returncode != 0:
+            output_string += f"Process exited with code {result.returncode}\n"
+        if not result.stdout and not result.stderr:
+            output_string += "No output produced\n"
+        output_string += f"STDOUT: {result.stdout}, STDERR: {result.stderr}"
+        return output_string
 
     except PermissionError as e:
+        return f"Error: {e}"
+    except FileNotFoundError as e:
+        return f"Error: {e}"
+    except ValueError as e:
         return f"Error: {e}"

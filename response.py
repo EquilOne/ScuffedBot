@@ -5,6 +5,7 @@ from openai import AsyncOpenAI
 from openai.types.responses import Response
 from openai.types.responses.response_input_param import ResponseInputParam
 
+from call_function import available_functions
 from prompts import system_prompt
 
 load_dotenv()
@@ -22,6 +23,8 @@ async def get_response(input: ResponseInputParam) -> Response:
         model="openrouter/free",
         input=input,
         instructions=system_prompt,
+        tools=available_functions,
+        tool_choice="auto",
     )
     if not resp:
         raise RuntimeError("No response returned")

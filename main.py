@@ -1,5 +1,7 @@
 import asyncio
+import json
 
+from openai.types.responses.response_function_tool_call import ResponseFunctionToolCall
 from openai.types.responses.response_input_param import ResponseInputParam
 from rich import print
 from rich.console import Console, Group
@@ -42,6 +44,9 @@ async def main():
         resp = await get_response(history)
 
     ai_response = resp.output_text
+    function_calls: list[ResponseFunctionToolCall] = [
+        item for item in resp.output if isinstance(item, ResponseFunctionToolCall)
+    ]
 
     # print("resp:", resp.__dict__)
 
@@ -79,6 +84,10 @@ async def main():
     assistant_response = Text()
     assistant_response.append("Assistant:\n\n", style="bold")
     assistant_response.append(ai_response)
+    if function_calls:
+        for call in function_calls:
+            parsed_args = json.loads(call.arguments)
+            assistant_response.append(f"\nCalling function: {call.name}({parsed_args})")
     print(Panel(assistant_response))
 
 

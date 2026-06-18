@@ -1,5 +1,7 @@
 import os
 
+from openai.types.responses import FunctionToolParam
+
 
 def get_files_info(working_directory, directory="."):
     try:
@@ -35,3 +37,22 @@ def get_files_info(working_directory, directory="."):
         return f"Error: {e}"
     except FileNotFoundError as e:
         return f"Error: {e}"
+
+
+get_files_info_tool: FunctionToolParam = {
+    "type": "function",
+    "name": "get_files_info",
+    "description": "Lists the contents of a directory located inside the working directory and returns the contents as a string.",
+    "strict": True,
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "directory": {
+                "type": "string",
+                "description": "The path to the file to read, relative to the working directory.",
+            }
+        },
+        "required": ["directory"],
+        "additionalProperties": False,
+    },
+}

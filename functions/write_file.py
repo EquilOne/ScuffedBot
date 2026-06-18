@@ -1,5 +1,7 @@
 import os
 
+from openai.types.responses import FunctionToolParam
+
 
 def write_file(working_dir: str, file_path: str, content: str) -> str:
     try:
@@ -30,3 +32,26 @@ def write_file(working_dir: str, file_path: str, content: str) -> str:
         return f"Error: {e}"
     except IsADirectoryError as e:
         return f"Error: {e}"
+
+
+write_file_tool: FunctionToolParam = {
+    "type": "function",
+    "name": "write_file",
+    "description": "Writes text content to a file inside the working directory, creating parent directories if needed.",
+    "strict": True,
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "file_path": {
+                "type": "string",
+                "description": "The path to the file to write, relative to the working directory.",
+            },
+            "content": {
+                "type": "string",
+                "description": "The text content to write to the file.",
+            },
+        },
+        "required": ["file_path", "content"],
+        "additionalProperties": False,
+    },
+}

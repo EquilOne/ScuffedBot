@@ -1,5 +1,7 @@
 import os
 
+from openai.types.responses import FunctionToolParam
+
 from config import MAX_CHARS
 
 
@@ -33,3 +35,22 @@ def get_file_content(working_directory: str, file_path: str) -> str:
         return f"Error: {e}"
     except FileNotFoundError as e:
         return f"Error: {e}"
+
+
+get_file_content_tool: FunctionToolParam = {
+    "type": "function",
+    "name": "get_file_content",
+    "description": "Reads the contents of a file located inside the working directory and returns the contents as a string.",
+    "strict": True,
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "file_path": {
+                "type": "string",
+                "description": "The path to the file to read, relative to the working directory.",
+            }
+        },
+        "required": ["file_path"],
+        "additionalProperties": False,
+    },
+}

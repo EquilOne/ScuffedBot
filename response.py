@@ -20,7 +20,7 @@ async def get_response(input: ResponseInputParam) -> Response:
         api_key=api_key,
     )
     resp = await client.responses.create(
-        model="openrouter/free",
+        model="inception/mercury-2:nitro",
         input=input,
         instructions=system_prompt,
         tools=available_functions,

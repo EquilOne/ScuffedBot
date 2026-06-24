@@ -3,9 +3,9 @@ import os
 from openai.types.responses import FunctionToolParam
 
 
-def write_file(working_dir: str, file_path: str, content: str) -> str:
+def write_file(working_directory: str, file_path: str, content: str) -> str:
     try:
-        working_dir_abs = os.path.abspath(working_dir)
+        working_dir_abs = os.path.abspath(working_directory)
         target_file = os.path.normpath(os.path.join(working_dir_abs, file_path))
         parent_dir = os.path.dirname(target_file)
         valid_target_path = (

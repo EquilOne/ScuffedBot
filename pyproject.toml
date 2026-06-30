@@ -15,3 +15,8 @@ dependencies = [
 venvPath = "."
 venv = ".venv"
 exclude = [".venv"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.20",
+]

@@ -1,6 +1,6 @@
 # ScuffedBot 🤖
 
-ScuffedBot is a professional-grade Python-based AI agent powered by the **OpenRouter API**. It provides a versatile interface for interacting with various LLMs, featuring both a high-fidelity CLI and an experimental TUI.
+ScuffedBot is a Python-based AI agent powered by the **OpenRouter API**. It provides a versatile interface for interacting with various LLMs, featuring both a high-fidelity CLI and an experimental TUI.
 
 ## 🚀 Features
 

@@ -1,9 +1,9 @@
 import json
 from collections.abc import Callable
-from typing import Any
 
 from openai.types.responses import ToolParam
 from openai.types.responses.response_function_tool_call import ResponseFunctionToolCall
+from openai.types.responses.response_input_item import FunctionCallOutput
 
 from functions.get_file_content import get_file_content, get_file_content_tool
 from functions.get_files_info import get_files_info, get_files_info_tool
@@ -28,7 +28,7 @@ function_map: dict[str, Callable[..., str]] = {
 
 def call_function(
     function_call: ResponseFunctionToolCall, verbose: bool = False
-) -> dict[str, Any]:
+) -> FunctionCallOutput:
     function_name = function_call.name or ""
     try:
         function_args: dict = (
@@ -43,21 +43,22 @@ def call_function(
         print(f"Calling function: {function_name}")
 
     if function_name not in function_map:
-        return {
-            "type": "function_call_output",
-            "call_id": function_id,
-            "output": json.dumps({"error": f"Unknown function: {function_name}"}),
-        }
+        return FunctionCallOutput(
+            type="function_call_output",
+            call_id=function_id,
+            output=json.dumps({"error": f"Unknown function: {function_name}"}),
+        )
+
     function_args = dict(function_args) if function_args else {}
-    function_args["working_directory"] = "./calculator"
+    function_args["working_directory"] = "."
 
     function_result: str = function_map[function_name](**function_args)
 
     if verbose:
         print(f"-> {function_result}")
 
-    return {
-        "type": "function_call_output",
-        "call_id": function_id,
-        "output": json.dumps({"result": function_result}),
-    }
+    return FunctionCallOutput(
+        type="function_call_output",
+        call_id=function_id,
+        output=json.dumps({"result": function_result}),
+    )

@@ -1,9 +1,12 @@
 import asyncio
 import json
 
-from openai.types.responses import Response
+from openai.types.responses import EasyInputMessage, Response
 from openai.types.responses.response_function_tool_call import ResponseFunctionToolCall
-from openai.types.responses.response_input_param import ResponseInputParam
+from openai.types.responses.response_input_item import (
+    FunctionCallOutput,
+    ResponseInputItem,
+)
 from rich.console import Console, Group
 from rich.json import JSON
 from rich.live import Live
@@ -34,16 +37,17 @@ async def main():
         raise RuntimeError("One-shot (CLI mode) requires a prompt argument")
 
     resp: Response | None = None
-    history: ResponseInputParam = []
+    history: list[ResponseInputItem] = []
     input = args.user_prompt
     function_calls = []
-    function_results = []
+    function_results: list[FunctionCallOutput] = []
     function_result_outputs = []
     ai_response = ""
     loop_iterations = 0
     # agent_memory = True
 
-    history.append({"role": "user", "content": input})
+    # history.append({"role": "user", "content": input})
+    history.append(EasyInputMessage(role="user", content=input))
 
     if args.dry_run:
         return
@@ -52,21 +56,27 @@ async def main():
         for i in range(20):
             loop_iterations = i + 1
             resp: Response | None = await get_response(history)
-
+            if resp.status == "failed" or resp.error:
+                raise RuntimeError(f"API call failed: {resp.error}")
+            ai_response = resp.output_text
             function_calls: list[ResponseFunctionToolCall] = [
                 item
                 for item in resp.output
                 if isinstance(item, ResponseFunctionToolCall)
             ]
-            if len(function_calls) == 0:
+            # history.append({"role": "assistant", "content": ai_response})
+            history.append(EasyInputMessage(role="assistant", content=ai_response))
+            if len(function_calls) > 0:
+                history.extend(function_calls)
+                for call in function_calls:
+                    call_result = call_function(call, verbose=args.verbose)
+                    function_results.append(call_result)
+                    function_result_outputs.append(call_result.output)
+                history.extend(function_results)
+            elif len(function_calls) == 0:
                 break
-            for call in function_calls:
-                call_result = call_function(call, verbose=args.verbose)
-                function_results.append(call_result)
-                function_result_outputs.append(call_result["output"])
-            history.extend(function_results)
-            ai_response = resp.output_text
-            history.append({"role": "assistant", "content": ai_response})
+            else:
+                console.print("Error: max iterations reached")
 
         # print("resp:", resp.__dict__)
         if resp is None:
@@ -106,7 +116,7 @@ async def main():
             console.print(Panel(model_info, expand=False))
         assistant_response.append("Assistant:\n\n", style="bold")
         assistant_response.append(ai_response)
-        if len(function_calls) > 0:
+        if function_calls and len(function_calls) > 0:
             for call in function_calls:
                 parsed_args = json.loads(call.arguments)
                 assistant_response.append(
@@ -116,11 +126,7 @@ async def main():
         if args.debug:
             # console.print("Response object: ", resp.model_dump())
             console.print(
-                Panel(
-                    JSON.from_data(resp.model_dump()),
-                    title="Response object",
-                    expand=True,
-                )
+                JSON.from_data(resp.model_dump()),
             )
             console.print("Iteration(s): ", loop_iterations)
 

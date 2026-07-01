@@ -5,10 +5,14 @@ from rich.console import Console
 console = Console(width=100)
 
 parser = argparse.ArgumentParser(
-    prog="Chatbot", description="Basic call, response chatbot"
+    prog="scuffedbot",
+    description="AI coding agent with file operations and function calling",
 )
 parser.add_argument(
-    "-o", "--one-shot", action="store_true", help="Single response mode, no history"
+    "-o",
+    "--one-shot",
+    action="store_true",
+    help="Run in CLI one-shot mode (default: TUI)",
 )
 parser.add_argument("user_prompt", type=str, nargs="?", help="User prompt")
 parser.add_argument("-d", "--debug", action="store_true", help="Run with debug output")
@@ -19,4 +23,4 @@ parser.add_argument(
 args = parser.parse_args()
 
 if args.debug:
-    console.print(args.__dict__)
+    console.print(vars(args))

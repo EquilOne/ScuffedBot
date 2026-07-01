@@ -16,18 +16,13 @@ from rich.table import Table
 from rich.text import Text
 
 from call_function import call_function
+from config import MAX_ITERATIONS
 from custom_args import args
 from input import ChatInputApp
-
-# from input import ChatInputApp
 from response import get_response
 
 console = Console(width=100)
 status = Status("Crunching the tokens...", spinner="pipe", spinner_style="bold white")
-
-
-# def construct_panel(content, **args):
-#     return Panel(content, **args)
 
 
 async def main():
@@ -39,97 +34,87 @@ async def main():
 
     resp: Response | None = None
     history: list[ResponseInputItem] = []
-    input = args.user_prompt
+    user_prompt = args.user_prompt
     function_calls = []
     function_results: list[FunctionCallOutput] = []
     function_result_outputs = []
     ai_response = ""
     loop_iterations = 0
-    # agent_memory = True
 
-    # history.append({"role": "user", "content": input})
-    history.append(EasyInputMessage(role="user", content=input))
+    history.append(EasyInputMessage(role="user", content=user_prompt))
 
     if args.dry_run:
         return
 
     with Live(Panel(Group(status), expand=False), console=console, transient=True):
-        for i in range(20):
+        for i in range(MAX_ITERATIONS):
             loop_iterations = i + 1
-            resp: Response | None = await get_response(history)
+            resp = await get_response(history)
             if resp.status == "failed" or resp.error:
                 raise RuntimeError(f"API call failed: {resp.error}")
             ai_response = resp.output_text
-            function_calls: list[ResponseFunctionToolCall] = [
+            function_calls = [
                 item
                 for item in resp.output
                 if isinstance(item, ResponseFunctionToolCall)
             ]
-            # history.append({"role": "assistant", "content": ai_response})
             history.append(EasyInputMessage(role="assistant", content=ai_response))
-            if len(function_calls) > 0:
+            if function_calls:
                 history.extend(function_calls)
                 for call in function_calls:
                     call_result = call_function(call, verbose=args.verbose)
                     function_results.append(call_result)
                     function_result_outputs.append(call_result.output)
                 history.extend(function_results)
-            elif len(function_calls) == 0:
-                break
             else:
-                console.print("Error: max iterations reached")
-
-        # print("resp:", resp.__dict__)
-        if resp is None:
-            raise RuntimeError("No response returned")
-        assistant_response = Text()
-        response_info = Text()
-        response_info.append("User prompt: \n", style="bold")
-        response_info.append(f"{input}")
-        console.print(Panel(response_info, expand=False))
-        if args.verbose:
-            if not resp.usage:
-                raise RuntimeError("No usage data found")
-            usage = resp.usage
-            # For testing purposes
-            # print("User prompt: ", input)
-            # print("Prompt tokens: ", usage.input_tokens)
-            # print("Response tokens: ", usage.output_tokens)
-            prompt_tokens = usage.input_tokens
-            resp_tokens = usage.output_tokens
-            reasoning_tokens = usage.output_tokens_details.reasoning_tokens
-
-            tokens_table = Table(title="Tokens", title_justify="left")
-            tokens_table.add_column("Token Type", justify="left", no_wrap=True)
-            tokens_table.add_column("Count", justify="center", no_wrap=True)
-            tokens_table.add_row("Prompt", str(prompt_tokens))
-            tokens_table.add_row("Response", str(resp_tokens))
-            tokens_table.add_row("Reasoning", str(reasoning_tokens))
-            console.print(Panel(tokens_table, expand=False))
-
-            model_info = Text()
-            model_info.append("Model: ", style="bold")
-            model_info.append(f"{resp.model}")
-            if len(function_result_outputs) > 0:
-                model_info.append("\nFunction call results: ", style="bold")
-                for output in function_result_outputs:
-                    model_info.append(f"{output}\n")
-            console.print(Panel(model_info, expand=False))
-        assistant_response.append("Assistant:\n\n", style="bold")
-        assistant_response.append(ai_response)
-        if function_calls and len(function_calls) > 0:
-            for call in function_calls:
-                parsed_args = json.loads(call.arguments)
-                assistant_response.append(
-                    f"\nCalling function: {call.name}({parsed_args})"
-                )
-        console.print(Panel(assistant_response))
-        if args.debug:
-            # console.print("Response object: ", resp.model_dump())
+                break
+        else:
+            # Loop exhausted without a text-only response
             console.print(
-                JSON.from_data(resp.model_dump()),
+                Panel("[red]Error: max iterations reached without final response[/red]")
             )
-            console.print("Iteration(s): ", loop_iterations)
+
+    assistant_response = Text()
+    response_info = Text()
+    response_info.append("User prompt: \n", style="bold")
+    response_info.append(f"{user_prompt}")
+    console.print(Panel(response_info, expand=False))
+    if args.verbose:
+        if not resp.usage:
+            raise RuntimeError("No usage data found")
+        usage = resp.usage
+        prompt_tokens = usage.input_tokens
+        resp_tokens = usage.output_tokens
+        reasoning_tokens = usage.output_tokens_details.reasoning_tokens
+
+        tokens_table = Table(title="Tokens", title_justify="left")
+        tokens_table.add_column("Token Type", justify="left", no_wrap=True)
+        tokens_table.add_column("Count", justify="center", no_wrap=True)
+        tokens_table.add_row("Prompt", str(prompt_tokens))
+        tokens_table.add_row("Response", str(resp_tokens))
+        tokens_table.add_row("Reasoning", str(reasoning_tokens))
+        console.print(Panel(tokens_table, expand=False))
+
+        model_info = Text()
+        model_info.append("Model: ", style="bold")
+        model_info.append(f"{resp.model}")
+        if function_result_outputs:
+            model_info.append("\nFunction call results: ", style="bold")
+            for output in function_result_outputs:
+                model_info.append(f"{output}\n")
+        console.print(Panel(model_info, expand=False))
+    assistant_response.append("Assistant:\n\n", style="bold")
+    assistant_response.append(ai_response)
+    if function_calls:
+        for call in function_calls:
+            parsed_args = json.loads(call.arguments)
+            assistant_response.append(f"\nCalling function: {call.name}({parsed_args})")
+    console.print(Panel(assistant_response))
+    if args.debug:
+        console.print(
+            JSON.from_data(resp.model_dump()),
+        )
+        console.print("Iteration(s): ", loop_iterations)
 
 
 if __name__ == "__main__":

@@ -17,6 +17,7 @@ from rich.text import Text
 
 from call_function import call_function
 from custom_args import args
+from input import ChatInputApp
 
 # from input import ChatInputApp
 from response import get_response
@@ -30,9 +31,9 @@ status = Status("Crunching the tokens...", spinner="pipe", spinner_style="bold w
 
 
 async def main():
-    # if not args.one_shot:
-    #     await ChatInputApp().run_async()
-    #     return
+    if not args.one_shot:
+        await ChatInputApp().run_async()
+        return
     if not args.user_prompt:
         raise RuntimeError("One-shot (CLI mode) requires a prompt argument")
 

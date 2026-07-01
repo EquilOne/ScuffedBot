@@ -1,20 +1,15 @@
 # ScuffedBot 🤖
 
-ScuffedBot is a Python-based AI agent powered by the **OpenRouter API**. It provides a versatile interface for interacting with various LLMs, featuring both a high-fidelity CLI and an experimental TUI.
+ScuffedBot is a Python-based AI coding agent powered by the **OpenRouter API**. It can read files, list directories, write files, and execute Python scripts via LLM function calling. Features both a TUI (default) and a CLI one-shot mode.
 
 ## 🚀 Features
 
-- **Async API Interaction**: Built with `openai`'s async client for high-performance communication with OpenRouter.
-- **Rich CLI Experience**:
-  - Beautifully formatted output using the `rich` library.
-  - Detailed **Token Usage Tables** (Prompt, Response, and Reasoning tokens).
-  - Live status spinners and model information.
-- **Experimental TUI**: An interactive, terminal-based user interface built with `textual` for persistent chat sessions (WIP).
-- **Advanced CLI Arguments**:
-  - `verbose`: Show detailed token counts and model metadata.
-  - `debug`: Inspect raw API response objects.
-  - `dry-run`: Test logic without consuming API credits.
-  - `one-shot`: Quick single-prompt execution.
+- **Function-Calling Agent**: The model can read files, list directories, write files, and run Python scripts — all within a secure path-scoped sandbox.
+- **Interactive TUI** (default): Persistent chat session with Enter-to-submit, `/clear` command, and live loading indicator.
+- **CLI One-Shot Mode**: Quick single-prompt execution for scripting and automation.
+- **Rich CLI Output**: Token usage tables, model information, live status spinners, and debug views.
+- **Async by Default**: Built on `openai`'s async client for non-blocking API communication.
+- **Configurable Model**: Set via `MODEL_NAME` environment variable (defaults to `inception/mercury-2:nitro`).
 
 ## 🛠 Tech Stack
 
@@ -27,54 +22,68 @@ ScuffedBot is a Python-based AI agent powered by the **OpenRouter API**. It prov
 
 ## 📦 Installation
 
-This project uses `uv` for lightning-fast dependency management.
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/ScuffedBot.git
+cd ScuffedBot
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/yourusername/ScuffedBot.git
-   cd ScuffedBot
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   uv sync
-   ```
+# Install dependencies
+uv sync
+```
 
 ## ⚙️ Setup
 
-Before running the bot, you must configure your OpenRouter API key.
+Create a `.env` file in the project root with your OpenRouter API key:
 
-1. Create a `.env` file in the project root:
-   ```bash
-   touch .env
-   ```
+```env
+OPENROUTER_API_KEY=your_openrouter_api_key_here
+```
 
-2. Add your API key to the `.env` file:
-   ```env
-   OPENROUTER_API_KEY=your_openrouter_api_key_here
-   ```
+Optionally override the model:
+
+```env
+MODEL_NAME=openai/gpt-4o
+```
 
 ## 🖥 Usage
 
-### CLI Mode (Recommended)
-Run a quick prompt directly from your terminal:
+### TUI Mode (Default)
+Launch the interactive chat interface:
+
 ```bash
-uv run main.py "Explain quantum entanglement in 2 sentences."
+uv run main.py
+```
+
+Type your message and press Enter. Shift+Enter inserts a newline. Type `/clear` to reset the conversation. The model can read files, list directories, write files, and run Python code as needed.
+
+### CLI One-Shot Mode
+Run a single prompt and exit:
+
+```bash
+uv run main.py -o "List the files in the calculator directory"
 ```
 
 **Available Flags:**
-- `-v`, `--verbose`: Show token usage and model information.
-- `-d`, `--debug`: Print internal arguments and raw JSON response.
-- `-n`, `--dry-run`: Skip the API call (useful for testing CLI logic).
-- `-O`, `--one-shot`: Run without the ScuffedBot intro greeting.
+| Flag                | Description                                       |
+| ------------------- | ------------------------------------------------- |
+| `-o`, `--one-shot`  | Run in CLI one-shot mode (default: TUI)           |
+| `-v`, `--verbose`   | Show token usage and model information            |
+| `-d`, `--debug`     | Print internal arguments and raw JSON response    |
+| `-n`, `--dry-run`   | Skip the API call (useful for testing)            |
 
-### TUI Mode (Experimental)
-Launch the interactive terminal interface:
-```bash
-uv run input.py
+## 📁 Project Structure
+
 ```
-*Note: The TUI is currently a work-in-progress and may have limited functionality compared to the CLI.*
+call_function.py   — Function dispatch hub (routes tool calls to implementations)
+config.py          — Centralized configuration (model, timeouts, paths)
+custom_args.py     — CLI argument parsing
+functions/         — Tool implementations (read, write, list, run)
+input.py           — Textual TUI chat interface
+main.py            — CLI entrypoint + one-shot agent loop
+prompts.py         — System prompt for the AI model
+response.py        — OpenRouter API interaction
+```
 
-## ⚖️ License
+## 📄 License
 
 This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.

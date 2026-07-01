@@ -1,7 +1,10 @@
 import os
 import subprocess
+import sys
 
 from openai.types.responses import FunctionToolParam
+
+from config import SUBPROCESS_TIMEOUT
 
 
 def run_python_file(
@@ -25,11 +28,13 @@ def run_python_file(
         if not target.endswith(".py"):
             raise ValueError(f'"{file_path}" is not a Python file')
 
-        command = ["python", target]
+        command = [sys.executable, target]
         if args is not None:
             command.extend(args)
 
-        result = subprocess.run(command, capture_output=True, text=True, timeout=30)
+        result = subprocess.run(
+            command, capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT
+        )
         output_string = ""
 
         if result.returncode != 0:
@@ -45,6 +50,10 @@ def run_python_file(
         return f"Error: {e}"
     except ValueError as e:
         return f"Error: {e}"
+    except subprocess.TimeoutExpired:
+        return f"Error: Execution timed out after {SUBPROCESS_TIMEOUT} seconds"
+    except OSError as e:
+        return f"Error: Could not execute file: {e}"
 
 
 run_python_file_tool: FunctionToolParam = {

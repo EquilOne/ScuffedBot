@@ -23,7 +23,7 @@ def get_file_content(working_directory: str, file_path: str) -> str:
                 f'File not found or is not a regular file: "{file_path}"'
             )
 
-        with open(target_file, "r") as f:
+        with open(target_file, "r", encoding="utf-8") as f:
             content = f.read(MAX_CHARS)
             if f.read(1):
                 content += (
@@ -35,6 +35,10 @@ def get_file_content(working_directory: str, file_path: str) -> str:
         return f"Error: {e}"
     except FileNotFoundError as e:
         return f"Error: {e}"
+    except OSError as e:
+        return f"Error: {e}"
+    except UnicodeDecodeError as e:
+        return f"Error: Could not decode file as UTF-8: {e}"
 
 
 get_file_content_tool: FunctionToolParam = {
